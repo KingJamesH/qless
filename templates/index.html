@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Restaurant Finder</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <div class="background-grid"></div>
+  <nav class="navbar">
+    <div class="logo">Qless</div>
+    <ul>
+      <li><a href="/" class="active">Customer</a></li>
+      <li><a href="/business">Business</a></li>
+    </ul>
+  </nav>
+  <div class="container">
+    <div class="left-panel">
+      <h2>Find Restaurants</h2>
+      <form method="POST" action="/">
+        <label for="location">Your Location</label>
+        <input type="text" id="location" name="location" placeholder="Enter your town name" required />
+        <label for="cuisine">Cuisine Type</label>
+        <select id="cuisine" name="cuisine">
+          <option value="">Any</option>
+          <option value="italian">Italian</option>
+          <option value="chinese">Asian</option>
+          <option value="mexican">Mexican</option>
+          <option value="indian">Indian</option>
+          <option value="american">American</option>
+        </select>
+        <button type="submit" class="submit-btn">Search</button>
+      </form>
+    </div>
+
+    <div class="right-panel">
+      <h2>Restaurant Results</h2>
+      <div class="restaurant-list">
+        {% if restaurants %}
+          {% for name, data in restaurants.items() %}
+            <div class="restaurant-card">
+              <h3>{{ name }} - {{ data.cuisine }}</h3>
+              <p>Rating: {{ data.rating }}/5</p>
+              <p>Distance: {{ data.distance }} miles</p>
+              <p>Opening/closing Times: {{ data.opening_time }}-{{ data.closing_time }}</p>
+
+              {% if name in status_data %}
+                <div class="availability-status">
+                  <p class="status-text">Employees Working: {{ status_data[name]['employees'] }}</p>
+                  <p class="status-text">Tables Available: {{ status_data[name]['open_tables'] }}</p>
+                  <p class="status-text">Queue Length: {{ status_data[name]['queue_length'] }}</p>
+                  <p class="status-text">Estimated Wait Time: {{ status_data[name]['est-waittime'] }} minutes</p>
+                </div>
+              {% else %}
+                <p class="closing-time">No live status available.</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No restaurants found yet. Try searching above!</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <script>
+    const grid = document.querySelector('.background-grid');
+
+    document.addEventListener('mousemove', (e) => {
+      const x = e.clientX;
+      const y = e.clientY;
+
+      const offsetX = (x / window.innerWidth - 0.5) * 50;
+      const offsetY = (y / window.innerHeight - 0.5) * 50;
+      grid.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
+
+      grid.style.setProperty('--cursor-x', `${x}px`);
+      grid.style.setProperty('--cursor-y', `${y}px`);
+    });
+
+</script>
+
+</body>
+</html>

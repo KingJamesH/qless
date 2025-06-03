@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="background-grid"></div>
+  <nav class="navbar">
+    <div class="logo">Qless</div>
+    <ul>
+      <li><a href="/">Customer</a></li>
+      <li><a href="/business" class="active">Business</a></li>
+    </ul>
+  </nav>
+  <div class="container">
+    <div class="left-panel">
+      <h2>Update Restaurant Status</h2>
+      <div class="form-group">
+        <label for="restaurant">Restaurant Name  </label>
+        <input type="text" id="restaurant" placeholder="Enter your restaurant name">
+      </div>
+      <div class="form-group">
+        <label for="employees">Number of Employees  </label>
+        <input type="number" id="employees">
+      </div>
+      <div class="form-group">
+        <label for="open_tables">Open Tables  </label>
+        <input type="number" id="open_tables">
+      </div>
+      <div class="form-group">
+        <label for="queue_length">Queue Length  </label>
+        <input type="number" id="queue_length">
+      </div>
+      <button onclick="submitStatus()" class="submit-btn">Submit</button>
+      <div id="statusMessage"></div>
+    </div>
+  </div>
+
+  <script>
+    function submitStatus() {
+      const restaurant = document.getElementById('restaurant').value;
+      const employees = document.getElementById('employees').value;
+      const open_tables = document.getElementById('open_tables').value;
+      const queue_length = document.getElementById('queue_length').value;
+
+      fetch('/update-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ restaurant, employees, open_tables, queue_length }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          const statusMessage = document.getElementById('statusMessage');
+          if (data.success) {
+            statusMessage.innerHTML = '<p class="success-message">Status updated successfully!</p>';
+          } else {
+            statusMessage.innerHTML = '<p class="error-message">Error: ' + data.message + '</p>';
+          }
+        });
+    }
+  </script>
+  <script>
+    const grid = document.querySelector('.background-grid');
+
+    document.addEventListener('mousemove', (e) => {
+      const x = e.clientX;
+      const y = e.clientY;
+
+      const offsetX = (x / window.innerWidth - 0.5) * 50;
+      const offsetY = (y / window.innerHeight - 0.5) * 50;
+      grid.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
+
+      grid.style.setProperty('--cursor-x', `${x}px`);
+      grid.style.setProperty('--cursor-y', `${y}px`);
+    });
+
+  </script>
+</body>
+</html>
