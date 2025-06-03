@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, jsonify
 from data import Restaurant, run, wait_time_calculation
 from datetime import datetime
+import os
 
-app = Flask(__name__)
+# Configure Flask to serve static files from the correct directory
+app = Flask(__name__, static_url_path='', static_folder='static')
 restaurant_statuses = {}
 
 
