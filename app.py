@@ -10,25 +10,65 @@ restaurant_statuses = {}
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    cuisine = request.form.get('cuisine', '')
-    price = request.form.get('price', '')
-    restaurants = {}
-
     if request.method == 'POST':
-        loc = request.form.get('location')
-        restaurants = run(loc)
-        filtered_restaurants = restaurants.copy()
-
-        if cuisine and cuisine.lower() != 'any':
-            filtered_restaurants = {
-                name: data for name, data in filtered_restaurants.items()
-                if str(data['cuisine']).lower() == cuisine.lower()
+        try:
+            # Get form data
+            loc = request.form.get('location', '').strip()
+            cuisine = request.form.get('cuisine', '').strip()
+            
+            if not loc:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({'success': False, 'error': 'Location is required'}), 400
+                return render_template('index.html', restaurants={}, status_data=restaurant_statuses)
+            
+            print(f"Getting restaurants for location: {loc}")
+            
+            # Get restaurant data
+            restaurants = run(loc)
+            print(f"Found {len(restaurants)} restaurants")
+            
+            # Filter by cuisine if specified
+            filtered_restaurants = {}
+            for name, data in restaurants.items():
+                if not cuisine or cuisine.lower() == 'any' or \
+                   (data.get('cuisine') and data['cuisine'].lower() == cuisine.lower()):
+                    # Ensure all required fields exist
+                    if 'is_open' not in data:
+                        data['is_open'] = True  # Default to open if not specified
+                    if 'rating' not in data:
+                        data['rating'] = 0
+                    if 'price_level' not in data:
+                        data['price_level'] = 1
+                    filtered_restaurants[name] = data
+            
+            print(f"After filtering: {len(filtered_restaurants)} restaurants")
+            
+            # Prepare response data
+            response_data = {
+                'success': True,
+                'count': len(filtered_restaurants),
+                'restaurants': filtered_restaurants
             }
-
-    else:
-        filtered_restaurants = {}
-
-    return render_template('index.html', restaurants=filtered_restaurants, status_data=restaurant_statuses)
+            
+            # Check if it's an AJAX request
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(response_data)
+            
+            # For regular form submission (fallback)
+            return render_template('index.html', 
+                               restaurants=filtered_restaurants, 
+                               status_data=restaurant_statuses)
+            
+        except Exception as e:
+            print(f"Error in index route: {str(e)}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'error': str(e)}), 500
+            return render_template('index.html', restaurants={}, status_data=restaurant_statuses)
+    
+    # GET request - show empty form
+    return render_template('index.html', 
+                         restaurants={}, 
+                         status_data=restaurant_statuses)
     
 
 

@@ -2,84 +2,427 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Find the best restaurants with real-time availability and wait times" />
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <title>Restaurant Finder</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <title>Qless - Find Restaurants with No Wait</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/clean.css') }}" />
 </head>
 <body>
-  <div class="background-grid"></div>
   <nav class="navbar">
-    <div class="logo">Qless</div>
+    <a href="/" class="logo"><i class="fas fa-utensils"></i> Qless</a>
     <ul>
-      <li><a href="/" class="active">Customer</a></li>
-      <li><a href="/business">Business</a></li>
+      <li><a href="/" class="active"><i class="fas fa-search"></i> Find Restaurants</a></li>
+      <li><a href="/business"><i class="fas fa-store"></i> For Businesses</a></li>
     </ul>
   </nav>
-  <div class="container">
-    <div class="left-panel">
-      <h2>Find Restaurants</h2>
-      <form method="POST" action="/">
-        <label for="location">Your Location</label>
-        <input type="text" id="location" name="location" placeholder="Enter your town name" required />
-        <label for="cuisine">Cuisine Type</label>
-        <select id="cuisine" name="cuisine">
-          <option value="">Any</option>
-          <option value="italian">Italian</option>
-          <option value="chinese">Asian</option>
-          <option value="mexican">Mexican</option>
-          <option value="indian">Indian</option>
-          <option value="american">American</option>
-        </select>
-        <button type="submit" class="submit-btn">Search</button>
-      </form>
-    </div>
 
-    <div class="right-panel">
-      <h2>Restaurant Results</h2>
-      <div class="restaurant-list">
-        {% if restaurants %}
-          {% for name, data in restaurants.items() %}
-            <div class="restaurant-card">
-              <h3>{{ name }} - {{ data.cuisine }}</h3>
-              <p>Rating: {{ data.rating }}/5</p>
-              <p>Distance: {{ data.distance }} miles</p>
-              <p>Opening/closing Times: {{ data.opening_time }}-{{ data.closing_time }}</p>
-
-              {% if name in status_data %}
-                <div class="availability-status">
-                  <p class="status-text">Employees Working: {{ status_data[name]['employees'] }}</p>
-                  <p class="status-text">Tables Available: {{ status_data[name]['open_tables'] }}</p>
-                  <p class="status-text">Queue Length: {{ status_data[name]['queue_length'] }}</p>
-                  <p class="status-text">Estimated Wait Time: {{ status_data[name]['est-waittime'] }} minutes</p>
-                </div>
-              {% else %}
-                <p class="closing-time">No live status available.</p>
-              {% endif %}
+  <main class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <h1>QLess</h1>
+        <p class="tagline">Find small-business restaurants with real-time availability and skip the wait</p>
+        
+        <form id="searchForm" class="search-form">
+          <div class="form-group">
+            <label for="location" class="sr-only">Location</label>
+            <div class="input-with-icon">
+              <i class="fas fa-map-marker-alt"></i>
+              <input type="text" id="location" name="location" placeholder="Enter your location" required />
             </div>
-          {% endfor %}
-        {% else %}
-          <p>No restaurants found yet. Try searching above!</p>
-        {% endif %}
+          </div>
+          
+          <div class="form-group">
+            <label for="cuisine" class="sr-only">Cuisine Type</label>
+            <div class="input-with-icon">
+              <i class="fas fa-utensils"></i>
+              <select id="cuisine" name="cuisine">
+                <option value="">Any Cuisine</option>
+                <option value="italian">Italian</option>
+                <option value="chinese">Asian</option>
+                <option value="mexican">Mexican</option>
+                <option value="indian">Indian</option>
+                <option value="american">American</option>
+              </select>
+            </div>
+          </div>
+          
+          <button type="submit" class="search-btn btn">
+            <i class="fas fa-search"></i> Find Restaurants
+          </button>
+        </form>
+        
+        <div id="searchResults" class="results-section" style="display: none;">
+          <div id="restaurantGrid" class="restaurant-grid">
+            <!-- Results will be inserted here by JavaScript -->
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </main>
+
+  {% if restaurants %}
+  <section id="staticResults" class="results-section" style="display: none;">
+    <div class="container">
+      <h2>Available Restaurants</h2>
+      <div class="restaurant-grid">
+      {% for name, data in restaurants.items() %}
+      <div class="restaurant-card">
+        <div class="restaurant-header">
+          <h3>{{ name }}</h3>
+          <span class="cuisine-badge">{{ data.cuisine }}</span>
+        </div>
+        
+        <div class="restaurant-info">
+          <div class="info-item">
+            <i class="fas fa-star"></i>
+            <span>{{ data.rating }}/5 ({{ data.review_count }} reviews)</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>{{ data.distance }} miles away</span>
+          </div>
+          <div class="info-item">
+            <i class="far fa-clock"></i>
+            <span>Open until {{ data.closing_time }}</span>
+          </div>
+        </div>
+
+        {% if name in status_data %}
+        <div class="availability-status">
+          <div class="status-item">
+            <i class="fas fa-users"></i>
+            <div>
+              <span class="status-label">Queue</span>
+              <span class="status-value">{{ status_data[name]['queue_length'] }} parties</span>
+            </div>
+          </div>
+          <div class="status-item highlight">
+            <i class="fas fa-clock"></i>
+            <div>
+              <span class="status-label">Wait Time</span>
+              <span class="status-value">{{ status_data[name]['est-waittime'] }} min</span>
+            </div>
+          </div>
+          <div class="status-item">
+            <i class="fas fa-chair"></i>
+            <div>
+              <span class="status-label">Available</span>
+              <span class="status-value">{{ status_data[name]['open_tables'] }} tables</span>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="no-status">
+          <i class="fas fa-info-circle"></i> Live status unavailable
+        </div>
+        {% endif %}
+        
+        {% if restaurant.website %}
+        <a href="{{ restaurant.website }}" target="_blank" rel="noopener noreferrer" class="btn btn-website">
+          <i class="fas fa-external-link-alt"></i> Website 
+        </a>
+        {% else %}
+        <button class="btn btn-secondary" disabled>
+          <i class="fas fa-unlink"></i> No Website
+        </button>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% else %}
+  {% endif %}
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-about">
+          <a href="/" class="footer-logo">
+            <i class="fas fa-utensils"></i> Qless
+          </a>
+          <p>James Hou, Rishi Saraf, Leo Hwang, and Neil Goswami</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
   <script>
-    const grid = document.querySelector('.background-grid');
-
-    document.addEventListener('mousemove', (e) => {
-      const x = e.clientX;
-      const y = e.clientY;
-
-      const offsetX = (x / window.innerWidth - 0.5) * 50;
-      const offsetY = (y / window.innerHeight - 0.5) * 50;
-      grid.style.backgroundPosition = `${offsetX}px ${offsetY}px`;
-
-      grid.style.setProperty('--cursor-x', `${x}px`);
-      grid.style.setProperty('--cursor-y', `${y}px`);
+    // Function to create a restaurant card element
+    function createRestaurantCard(name, restaurant) {
+      const card = document.createElement('div');
+      card.className = 'restaurant-card';
+      
+      // Format the restaurant data
+      const rating = restaurant.rating ? `${restaurant.rating} ★` : 'No rating';
+      const price = restaurant.price_level ? '•'.repeat(restaurant.price_level) : '';
+      const isOpen = restaurant.is_open ? 'Open Now' : 'Closed';
+      const openClass = restaurant.is_open ? 'open' : 'closed';
+      
+      // Create the card HTML
+      card.innerHTML = `
+        <div class="restaurant-header">
+          <h3>${name}</h3>
+          <span class="cuisine-badge">${restaurant.cuisine || 'Restaurant'}</span>
+        </div>
+        
+        <div class="restaurant-info">
+          <div class="info-row">
+            <span class="info-label"><i class="fas fa-star"></i> Rating:</span>
+            <span class="info-value">${rating} ${price}</span>
+          </div>
+          
+          <div class="info-row">
+            <span class="info-label"><i class="fas fa-clock"></i> Status:</span>
+            <span class="status-badge ${openClass}">${isOpen}</span>
+          </div>
+          
+          ${restaurant.times ? `
+          <div class="info-row">
+            <span class="info-label"><i class="fas fa-door-open"></i> Hours:</span>
+            <span class="info-value">${restaurant.times[0]} - ${restaurant.times[1]}</span>
+          </div>
+          ` : ''}
+          
+          ${restaurant.distance ? `
+          <div class="info-row">
+            <span class="info-label"><i class="fas fa-location-arrow"></i> Distance:</span>
+            <span class="info-value">${restaurant.distance} miles</span>
+          </div>
+          ` : ''}
+        </div>
+        
+        <div class="restaurant-actions">
+          <a href="${restaurant.website || 'https://www.tripadvisor.com/Search?q=' + encodeURIComponent(name)}" 
+             class="btn btn-primary" 
+             target="_blank" 
+             rel="noopener noreferrer">
+            <i class="fas fa-external-link-alt"></i> View on ${restaurant.website ? 'Website' : 'TripAdvisor'}
+          </a>
+        </div>
+      `;
+      
+      return card;
+    }
+    
+    // Form handling
+    document.addEventListener('DOMContentLoaded', function() {
+      
+      // Search form submission
+      const searchForm = document.getElementById('searchForm');
+      if (searchForm) {
+        searchForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const formData = new FormData(searchForm);
+          const searchBtn = searchForm.querySelector('button[type="submit"]');
+          const originalBtnText = searchBtn.innerHTML;
+          
+          try {
+            // Show loading state
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+            
+            // Debug: Log form data
+            const formDataObj = {};
+            formData.forEach((value, key) => formDataObj[key] = value);
+            console.log('Form data:', formDataObj);
+            
+            try {
+              // Send the form data to the server
+              const response = await fetch('/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                  'X-Requested-With': 'XMLHttpRequest',
+                  'Accept': 'application/json'
+                }
+              });
+              
+              console.log('Response status:', response.status);
+              
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server error:', errorText);
+                throw new Error(`Server responded with status ${response.status}: ${errorText}`);
+              }
+              
+              const data = await response.json();
+              console.log('API Response:', data);
+              
+              const searchResults = document.getElementById('searchResults');
+              const restaurantGrid = document.getElementById('restaurantGrid');
+              
+              if (!searchResults || !restaurantGrid) {
+                console.error('Could not find search results elements');
+                throw new Error('Could not find search results container');
+              }
+              
+              // Show the appropriate results section based on the context
+              const isInitialLoad = window.location.search.includes('initial=1');
+              
+              if (isInitialLoad) {
+                // For server-side rendered results
+                const staticResults = document.getElementById('staticResults');
+                if (staticResults) {
+                  staticResults.style.display = 'block';
+                }
+              } else {
+                // For AJAX search results
+                searchResults.style.display = 'block';
+                searchResults.style.maxWidth = '1400px';
+                searchResults.style.margin = '40px auto';
+                searchResults.style.padding = '0 20px';
+                searchResults.style.boxSizing = 'border-box';
+              }
+              
+              // Clear previous results and set grid styles
+              restaurantGrid.innerHTML = '';
+              restaurantGrid.style.display = 'grid';
+              restaurantGrid.style.gridTemplateColumns = 'repeat(2, minmax(550px, 1fr))';
+              restaurantGrid.style.gap = '40px';
+              restaurantGrid.style.width = '100%';
+              restaurantGrid.style.margin = '20px 0';
+              restaurantGrid.style.padding = '0';
+              restaurantGrid.style.boxSizing = 'border-box';
+              
+              // Check if we have restaurants in the response
+              const hasRestaurants = data.restaurants && Object.keys(data.restaurants).length > 0;
+              console.log('Has restaurants:', hasRestaurants, 'Restaurants:', data.restaurants);
+              
+              if (hasRestaurants) {
+                // Process and display the restaurants
+                Object.entries(data.restaurants).forEach(([name, restaurant]) => {
+                  console.log('Processing restaurant:', name, restaurant);
+                  try {
+                    // Ensure restaurant has required properties
+                    if (!restaurant) {
+                      console.warn('Skipping null/undefined restaurant:', name);
+                      return;
+                    }
+                    
+                    const restaurantCard = createRestaurantCard(name, restaurant);
+                    if (restaurantCard) {
+                      restaurantGrid.appendChild(restaurantCard);
+                    }
+                  } catch (error) {
+                    console.error('Error creating restaurant card:', error, 'Restaurant data:', restaurant);
+                  }
+                });
+                
+                // Show results if we added any cards
+                if (restaurantGrid.children.length > 0) {
+                  searchResults.style.display = 'block';
+                  // Scroll to results
+                  searchResults.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  showNoResults(restaurantGrid);
+                }
+              } else {
+                // No results found
+                console.log('No restaurants found in response');
+                showNoResults(restaurantGrid);
+              }
+            } catch (error) {
+              console.error('Error during search:', error);
+              const restaurantGrid = document.getElementById('restaurantGrid') || searchResults;
+              showError(restaurantGrid, 'Error searching for restaurants. Please try again.');
+            }
+            
+            function showNoResults(container) {
+              if (!container) return;
+              container.innerHTML = `
+                <div class="no-results">
+                  <i class="fas fa-utensils-slash"></i>
+                  <p>No restaurants found. Try adjusting your search criteria.</p>
+                </div>
+              `;
+              if (searchResults) searchResults.style.display = 'block';
+            }
+            
+            function showError(container, message) {
+              if (!container) return;
+              container.innerHTML = `
+                <div class="error-message">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <p>${message || 'An error occurred. Please try again.'}</p>
+                </div>
+              `;
+              if (searchResults) searchResults.style.display = 'block';
+            }
+          } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while searching. Please try again.');
+          } finally {
+            // Reset button state
+            searchBtn.disabled = false;
+            searchBtn.innerHTML = originalBtnText;
+          }
+        });
+      }
+      
+      // Ripple effect for buttons
+      function createRipple(e) {
+        const button = this;
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple');
+        
+        // Style the ripple
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${x}px`;
+        ripple.style.top = `${y}px`;
+        
+        // Remove any existing ripples
+        const existingRipples = button.getElementsByClassName('ripple');
+        while (existingRipples[0]) {
+          existingRipples[0].parentNode.removeChild(existingRipples[0]);
+        }
+        
+        // Add the ripple to the button
+        button.appendChild(ripple);
+        
+        // Remove the ripple after the animation completes
+        ripple.addEventListener('animationend', () => {
+          ripple.remove();
+        });
+      }
+      
+      // Add ripple effect to all buttons with .btn class
+      document.querySelectorAll('.btn:not([disabled])').forEach(button => {
+        button.addEventListener('click', createRipple);
+      });
     });
+  </script>
+  
+  <script>
+    // Intersection observer for cards
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = 1;
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
 
-</script>
-
+    document.querySelectorAll('.restaurant-card, .feature-card').forEach(card => {
+      card.style.opacity = 0;
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(card);
+    });
+  </script>
 </body>
 </html>

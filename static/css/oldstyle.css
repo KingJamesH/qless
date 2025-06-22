@@ -10,10 +10,20 @@ body {
  background-color: #f8f9fa;
  color: #333;
  min-height: 100vh;
- display: flex;
- justify-content: center;
- align-items: center;
- padding: 2rem;
+ margin: 0;
+ padding: 0;
+ display: block;
+}
+
+/* Reset any conflicting styles for the restaurant grid */
+#searchResults,
+#restaurantGrid,
+.restaurant-cards {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 

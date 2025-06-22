@@ -1,68 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Business dashboard for managing your restaurant's real-time availability and wait times" />
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <title>Business Dashboard</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <title>Qless - Business Dashboard</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/clean.css') }}" />
 </head>
 <body>
-  <div class="background-grid"></div>
   <nav class="navbar">
-    <div class="logo">Qless</div>
+    <a href="/" class="logo"><i class="fas fa-utensils"></i> Qless</a>
     <ul>
-      <li><a href="/">Customer</a></li>
-      <li><a href="/business" class="active">Business</a></li>
+      <li><a href="/"><i class="fas fa-search"></i> Find Restaurants</a></li>
+      <li><a href="/business" class="active"><i class="fas fa-store"></i> For Businesses</a></li>
     </ul>
   </nav>
-  <div class="container">
-    <div class="left-panel">
-      <h2>Update Restaurant Status</h2>
-      <div class="form-group">
-        <label for="restaurant">Restaurant Name  </label>
-        <input type="text" id="restaurant" placeholder="Enter your restaurant name">
+  <main class="business-container" style="min-height: calc(100vh - 70px); display: flex; flex-direction: column;">
+    <div class="business-content" style="flex: 1 0 auto;">
+      <div class="business-card">
+        <div class="card-header">
+          <h1><i class="fas fa-store-alt"></i> Business Dashboard</h1>
+          <p class="subtitle">Update your restaurant's real-time status</p>
+        </div>
+        
+        <div class="form-container">
+          <form id="statusForm" onsubmit="submitStatus(event)">
+            <div class="form-group">
+              <label for="restaurant">
+                <i class="fas fa-utensils"></i>
+                Restaurant Name
+              </label> 
+              <input type="text" id="restaurant" name="restaurant" placeholder="Enter restaurant name" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="employees">
+                <i class="fas fa-users"></i>
+                Number of Employees
+              </label>
+              <input type="number" id="employees" name="employees" placeholder="0" min="0" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="total_tables">
+                <i class="fas fa-table"></i>
+                Total Tables
+              </label>
+              <input type="number" id="total_tables" name="total_tables" placeholder="0" min="0" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="open_tables">
+                <i class="fas fa-chair"></i>
+                Open Tables
+              </label>
+              <input type="number" id="open_tables" name="open_tables" placeholder="0" min="0" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="queue_length">
+                <i class="fas fa-user-clock"></i>
+                Queue Length
+              </label>
+              <input type="number" id="queue_length" name="queue_length" placeholder="0" min="0" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+              <i class="fas fa-sync-alt"></i> Update Status
+            </button>
+            
+            <div id="statusMessage" class="status-message"></div>
+          </form>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="employees">Number of Employees  </label>
-        <input type="number" id="employees">
+      
+      <div class="instructions">
+        <h3>How to Update Your Status</h3>
+        <ol class="steps-list">
+          <li>Enter your restaurant's current status</li>
+          <li>Click "Update Status" to save changes</li>
+          <li>Your customers will see real-time updates</li>
+        </ol>
+        <div class="tip">
+          <i class="fas fa-lightbulb"></i>
+          <span>Tip: Update your status regularly for accurate wait times</span>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="open_tables">Open Tables  </label>
-        <input type="number" id="open_tables">
-      </div>
-      <div class="form-group">
-        <label for="queue_length">Queue Length  </label>
-        <input type="number" id="queue_length">
-      </div>
-      <button onclick="submitStatus()" class="submit-btn">Submit</button>
-      <div id="statusMessage"></div>
     </div>
-  </div>
+    
+    <footer class="footer" style="flex-shrink: 0; margin-top: 2rem;">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-about">
+            <a href="/" class="footer-logo">
+              <i class="fas fa-utensils"></i> Qless
+            </a>
+            <p>James Hou, Rishi Saraf, Leo Hwang, and Neil Goswami</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
 
   <script>
-    function submitStatus() {
-      const restaurant = document.getElementById('restaurant').value;
-      const employees = document.getElementById('employees').value;
-      const open_tables = document.getElementById('open_tables').value;
-      const queue_length = document.getElementById('queue_length').value;
-
-      fetch('/update-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ restaurant, employees, open_tables, queue_length }),
-      })
-        .then(response => response.json())
-        .then(data => {
-          const statusMessage = document.getElementById('statusMessage');
-          if (data.success) {
-            statusMessage.innerHTML = '<p class="success-message">Status updated successfully!</p>';
-          } else {
-            statusMessage.innerHTML = '<p class="error-message">Error: ' + data.message + '</p>';
-          }
+    document.addEventListener('DOMContentLoaded', function() {
+      // Animation for form groups
+      const formGroups = document.querySelectorAll('.form-group');
+      formGroups.forEach((group, index) => {
+        setTimeout(() => {
+          group.style.opacity = '1';
+          group.style.transform = 'translateY(0)';
+        }, 100 * index);
+      });
+      
+      // Add form submission handler
+      const form = document.getElementById('statusForm');
+      if (form) {
+        form.addEventListener('submit', submitStatus);
+      }
+    });
+    
+    async function submitStatus(event) {
+      event.preventDefault();
+      
+      const form = event.target;
+      const formData = new FormData(form);
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const statusMessage = document.getElementById('statusMessage');
+      
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+      statusMessage.innerHTML = '';
+      
+      try {
+        const response = await fetch('/update-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            restaurant: formData.get('restaurant'),
+            employees: parseInt(formData.get('employees')) || 0,
+            total_tables: parseInt(formData.get('total_tables')) || 0,
+            open_tables: parseInt(formData.get('open_tables')) || 0,
+            queue_length: parseInt(formData.get('queue_length')) || 0
+          })
         });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Show success message
+        statusMessage.innerHTML = `
+          <div class="success-message">
+            <i class="fas fa-check-circle"></i>
+            ${data.message || 'Status updated successfully!'}
+          </div>`;
+        
+        // Clear form after successful submission
+        form.reset();
+        
+      } catch (error) {
+        console.error('Error:', error);
+        statusMessage.innerHTML = `
+          <div class="error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            ${error.message || 'Failed to update status. Please try again.'}
+          </div>`;
+      } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status';
+        
+        // Hide message after 5 seconds
+        const messageTimer = setTimeout(() => {
+          if (statusMessage) {
+            statusMessage.style.opacity = '0';
+            setTimeout(() => {
+              statusMessage.innerHTML = '';
+              statusMessage.style.opacity = '1';
+            }, 300);
+          }
+        }, 5000);
+        
+        // Clear timeout if component unmounts
+        return () => clearTimeout(messageTimer);
+      }
     }
   </script>
   <script>
